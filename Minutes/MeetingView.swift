@@ -256,7 +256,7 @@ private struct StageStepper: View {
                         .foregroundStyle(isCurrent(s) || isDone(s) ? Color.ink : Color.inkSecondary)
                     Spacer()
                     if let t = meeting.timings[s.rawValue] {
-                        Text(t == 0 ? "live" : String(format: "%.1f s", t))
+                        Text(String(format: "%.1f s", t))
                             .font(.footnote.monospacedDigit()).foregroundStyle(Color.inkSecondary)
                     }
                 }

@@ -67,6 +67,36 @@ final class Recorder {
     }
 }
 
+/// Stateful sample-rate/format converter for streamed buffers.
+final class Converter {
+    let format: AVAudioFormat
+    private var converter: AVAudioConverter?
+
+    init(to format: AVAudioFormat) { self.format = format }
+
+    func convert(_ buffer: AVAudioPCMBuffer) throws -> AVAudioPCMBuffer {
+        if buffer.format == format { return buffer }
+        if converter?.inputFormat != buffer.format {
+            converter = AVAudioConverter(from: buffer.format, to: format)
+            converter?.primeMethod = .none // no timestamp drift
+        }
+        guard let converter,
+              let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity:
+                AVAudioFrameCount((Double(buffer.frameLength) * format.sampleRate / buffer.format.sampleRate).rounded(.up)) + 1)
+        else { throw CocoaError(.featureUnsupported) }
+        var consumed = false
+        var error: NSError?
+        converter.convert(to: out, error: &error) { _, status in
+            if consumed { status.pointee = .noDataNow; return nil }
+            consumed = true
+            status.pointee = .haveData
+            return buffer
+        }
+        if let error { throw error }
+        return out
+    }
+}
+
 @MainActor @Observable
 final class Player {
     private(set) var isPlaying = false

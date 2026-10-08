@@ -27,7 +27,7 @@ struct Notes: Codable, Hashable {
     var actions: [ActionItem] = []
 }
 
-enum Stage: String, Codable, CaseIterable {
+enum Stage: String, Codable {
     case transcribing = "Transcribing"
     case diarizing = "Identifying speakers"
     case writing = "Writing notes"

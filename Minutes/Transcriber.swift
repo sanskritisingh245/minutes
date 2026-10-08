@@ -1,8 +1,8 @@
 import AVFoundation
 import Speech
 
-/// iOS 26 on-device speech-to-text (SpeechAnalyzer) with word timestamps.
-/// One instance per recording or imported file. Not Apple Intelligence: the model is an OS-managed asset.
+/// iOS 26 on-device speech-to-text (SpeechAnalyzer) for the live preview while recording; its words are the
+/// fallback if Parakeet's final pass fails. Not Apple Intelligence: the model is an OS-managed asset.
 @MainActor @Observable
 final class Transcriber {
     private(set) var finalText = ""
@@ -93,35 +93,5 @@ final class Transcriber {
                 if let range = run.audioTimeRange { words[words.count - 1].end = range.end.seconds }
             }
         }
-    }
-}
-
-/// Stateful sample-rate/format converter for streamed buffers.
-final class Converter {
-    let format: AVAudioFormat
-    private var converter: AVAudioConverter?
-
-    init(to format: AVAudioFormat) { self.format = format }
-
-    func convert(_ buffer: AVAudioPCMBuffer) throws -> AVAudioPCMBuffer {
-        if buffer.format == format { return buffer }
-        if converter?.inputFormat != buffer.format {
-            converter = AVAudioConverter(from: buffer.format, to: format)
-            converter?.primeMethod = .none // no timestamp drift
-        }
-        guard let converter,
-              let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity:
-                AVAudioFrameCount((Double(buffer.frameLength) * format.sampleRate / buffer.format.sampleRate).rounded(.up)) + 1)
-        else { throw CocoaError(.featureUnsupported) }
-        var consumed = false
-        var error: NSError?
-        converter.convert(to: out, error: &error) { _, status in
-            if consumed { status.pointee = .noDataNow; return nil }
-            consumed = true
-            status.pointee = .haveData
-            return buffer
-        }
-        if let error { throw error }
-        return out
     }
 }
