@@ -1,0 +1,58 @@
+name: Minutes
+options:
+  bundleIdPrefix: com.fensory
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+packages:
+  # exact pins: FluidAudio renames public API between patch releases
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio.git
+    exactVersion: 0.17.7
+  LLM:
+    url: https://github.com/eastriverlee/LLM.swift
+    exactVersion: 3.0.3
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: CB79M56RDW # your team id (Xcode ▸ Settings ▸ Accounts)
+
+targets:
+  Minutes:
+    type: application
+    platform: iOS
+    sources: [Minutes]
+    dependencies:
+      - package: FluidAudio
+      - package: LLM
+    info:
+      path: Minutes/Info.plist
+      properties:
+        CFBundleDisplayName: Minutes
+        NSMicrophoneUsageDescription: Minutes records your meetings and processes them entirely on this iPhone.
+        UIBackgroundModes: [audio]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fensory.minutes
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  MinutesTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [MinutesTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+    dependencies:
+      - target: Minutes
